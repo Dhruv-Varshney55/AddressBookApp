@@ -4,10 +4,8 @@ public class ResponseDTO {
     private String message;
     private String status;
 
-    // Default Constructor
     public ResponseDTO() {}
 
-    // Parameterized Constructor
     public ResponseDTO(String message, String status) {
         this.message = message;
         this.status = status;

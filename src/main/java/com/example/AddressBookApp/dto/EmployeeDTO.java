@@ -5,10 +5,8 @@ public class EmployeeDTO {
     private String email;
     private Long id;
 
-    // Default Constructor
     public EmployeeDTO() {}
 
-    // Parameterized Constructor
     public EmployeeDTO(String name, String email, Long id) {
         this.name = name;
         this.email = email;
