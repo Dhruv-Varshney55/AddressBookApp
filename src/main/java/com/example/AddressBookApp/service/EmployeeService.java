@@ -5,13 +5,19 @@ import com.example.AddressBookApp.dto.ResponseDTO;
 import com.example.AddressBookApp.entity.EmployeeEntity;
 import com.example.AddressBookApp.interfaces.EmployeeInterface;
 import com.example.AddressBookApp.repository.EmployeeRepository;
+import lombok.extern.slf4j.Slf4j;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class EmployeeService implements EmployeeInterface {
+
+    ObjectMapper obj = new ObjectMapper();
+
     @Autowired
     EmployeeRepository empRepository;
 
@@ -19,17 +25,22 @@ public class EmployeeService implements EmployeeInterface {
         return new ResponseDTO(message, status);
     }
 
-    public EmployeeDTO get(Long id){
-        EmployeeEntity foundEmp = empRepository.findById(id).orElseThrow(()->new RuntimeException("Can't find employee with this id"));
+    public EmployeeDTO get(Long id) throws Exception{
+        EmployeeEntity foundEmp = empRepository.findById(id).orElseThrow(()-> {
+            log.error("Cannot find employee with id {}", id);
+            return new RuntimeException("Can't find employee with this id");
+        });
         EmployeeDTO edto = new EmployeeDTO(foundEmp.getName(), foundEmp.getEmail(), foundEmp.getId());
+        log.info("Employee DTO send for id: {} is : {}", id, obj.writeValueAsString(edto));
         return edto;
     }
 
-    public EmployeeDTO create(EmployeeDTO user){
+    public EmployeeDTO create(EmployeeDTO user) throws Exception{
         EmployeeEntity newUser = new EmployeeEntity(user.getName(), user.getEmail());
         empRepository.save(newUser);
+        log.info("Employee saved in db: {}", obj.writeValueAsString(newUser));
         EmployeeDTO edto = new EmployeeDTO(newUser.getName(), newUser.getEmail(), newUser.getId());
-        System.out.println(newUser.getId());
+        log.info("Employee DTO sent: {}", obj.writeValueAsString(edto));
         return edto;
     }
 
@@ -40,17 +51,24 @@ public class EmployeeService implements EmployeeInterface {
         }).collect(Collectors.toList());
     }
 
-    public EmployeeDTO edit(EmployeeDTO user, Long id){
-        EmployeeEntity foundEmp = empRepository.findById(id).orElseThrow(()->new RuntimeException("Can't find employee with this id"));
+    public EmployeeDTO edit(EmployeeDTO user, Long id) throws Exception{
+        EmployeeEntity foundEmp = empRepository.findById(id).orElseThrow(()->{
+            log.error("Cannot find employee with id : {}", id);
+            return new RuntimeException("Can't find employee with this id");
+        });
         foundEmp.setName(user.getName());
         foundEmp.setEmail(user.getEmail());
         empRepository.save(foundEmp);
+        log.info("Employee saved after editing in db is : {}", obj.writeValueAsString(foundEmp));
         EmployeeDTO edto = new EmployeeDTO(foundEmp.getName(), foundEmp.getEmail(), foundEmp.getId());
         return edto;
     }
 
     public String delete(Long id){
-        EmployeeEntity foundUser = empRepository.findById(id).orElseThrow(()->new RuntimeException("Can't find user with this id"));
+        EmployeeEntity foundUser = empRepository.findById(id).orElseThrow(()->{
+            log.error("Cannot find user with id : {}", id);
+            return new RuntimeException("Can't find user with this id");
+        });
         empRepository.delete(foundUser);
         return "Deleted successfully";
     }
