@@ -12,12 +12,23 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ContactDTO {
+
     String name;
 
     @Email
     @NotBlank
     String email;
+
     Long phoneNumber;
-    String address;
+
+    String Address;
+
     Long id;
+
+    public ContactDTO(String name, String email, Long phoneNumber, String address) {
+        this.name = name;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
+        Address = address;
+    }
 }
