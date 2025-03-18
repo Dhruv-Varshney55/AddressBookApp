@@ -1,7 +1,8 @@
 package com.example.AddressBookApp.interceptors;
 
+import com.example.AddressBookApp.entity.AuthUser;
+import com.example.AddressBookApp.repository.UserRepository;
 import com.example.AddressBookApp.service.JwtTokenService;
-import com.example.AddressBookApp.service.RedisTokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,38 +16,44 @@ public class AddressInterceptor implements HandlerInterceptor {
     JwtTokenService jwtTokenService;
 
     @Autowired
-    RedisTokenService redisTokenService;
+    UserRepository userRepository;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
-        // Get token from cookies
-        String token = null;
-        if (request.getCookies() != null) {
-            for (var cookie : request.getCookies()) {
-                if (cookie.getName().equals("jwt")) {
-                    token = cookie.getValue();
-                    break;
-                }
+        try{
+            // Get token from cookies
+            String token = null;
+
+            String auth = request.getHeader("Authorization");
+
+            if(auth == null){
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return false;
             }
-        }
 
-        // If no token, reject request
-        if (token == null) {
+            token = auth.substring(9);
+
+            // If no token, reject request
+            if (token == null) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return false;
+            }
+
+            System.out.println(token);
+
+            // Decode token to get user ID
+            Long userId = jwtTokenService.decodeToken(token);
+
+            // Check for user in database with given id
+
+            AuthUser foundUser = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+
+            // Token is valid → Allow request
+            return true;
+        }
+        catch (RuntimeException e) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return false;
         }
-
-        // Decode token to get user ID
-        String userId = jwtTokenService.decodeToken(token).toString();
-
-        // Check Redis for the token
-        String storedToken = redisTokenService.getToken(userId);
-        if (storedToken == null || !storedToken.equals(token)) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            return false;
-        }
-
-        // Token is valid → Allow request
-        return true;
     }
 }

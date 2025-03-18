@@ -26,7 +26,7 @@ public class AuthenticationService implements AuthInterface {
     UserRepository userRepository;
 
     @Autowired
-    EmailService emailService;
+    MessageProducer messageProducer;
 
     @Autowired
     JwtTokenService jwtTokenService;
@@ -58,8 +58,9 @@ public class AuthenticationService implements AuthInterface {
 
             log.info("User saved in database : {}", getJSON(newUser));
 
-            //sending the confirmation mail to the user
-            emailService.sendEmail(user.getEmail(), "Your Account is Ready!", "UserName : " + user.getFirstName() + " " + user.getLastName() + "\nEmail : " + user.getEmail() + "\nYou are registered!\nBest Regards");
+            //sending the custom message to Message Producer
+            String customMessage = "REGISTER|"+user.getEmail()+"|"+user.getFirstName();
+            messageProducer.sendMessage(customMessage);
 
             return "User registered";
         }
@@ -88,19 +89,9 @@ public class AuthenticationService implements AuthInterface {
             // Creating Jwt Token
             String token = jwtTokenService.createToken(foundUser.getId());
 
-            // Store the token generated in cookies
-            ResponseCookie resCookie = ResponseCookie.from("jwt", token)
-                    .httpOnly(true)
-                    .secure(false)      // Set to true but for local host set it to false as local host sent uses HTTP request
-                    .path("/")
-                    .maxAge(3600)
-                    .sameSite("Strict")
-                    .build();
-
-            response.addHeader(HttpHeaders.SET_COOKIE, resCookie.toString());
-
-            // Store the token in redis server as well
-            redisTokenService.saveToken(foundUser.getId().toString(), token);
+            //setting token in header of response
+            System.out.println(token);
+            response.addHeader("Authorization", "Bearer : "+token);
 
             // Setting token for user login
             foundUser.setToken(token);
@@ -133,13 +124,17 @@ public class AuthenticationService implements AuthInterface {
             log.info("Hashpassword: {} for password: {} saved for user: {}", hashpass, pass.getPassword(),getJSON(foundUser));
 
             userRepository.save(foundUser);
-            emailService.sendEmail(email, "Password Forgot Status", "Your password has been changed!");
+
+            //sending the custom message to Message Producer
+            String customMessage = "FORGOT|"+foundUser.getEmail()+"|"+foundUser.getFirstName();
+            messageProducer.sendMessage(customMessage);
+
             AuthUserDTO resDto = new AuthUserDTO(foundUser.getFirstName(), foundUser.getLastName(), foundUser.getEmail(), foundUser.getPassword(), foundUser.getId());
 
             return resDto;
         }
         catch(RuntimeException e){
-            log.error("user not registered with email: {} Exception : {}", email, e);
+            log.error("User not registered with email: {} Exception : {}", email, e);
         }
 
         return null;
@@ -163,7 +158,9 @@ public class AuthenticationService implements AuthInterface {
 
         userRepository.save(foundUser);
         log.info("Hashpassword: {} for password: {} saved for user: {}", hashpass, newPass, getJSON(foundUser));
-        emailService.sendEmail(email, "Password reset status", "Your password is reset successfully");
+
+        String customMessage = "RESET|"+foundUser.getEmail()+"|"+foundUser.getFirstName();
+        messageProducer.sendMessage(customMessage);
 
         return "Password reset successful!";
     }

@@ -5,6 +5,7 @@ import com.example.AddressBookApp.dto.ResponseDTO;
 import com.example.AddressBookApp.interfaces.ContactInterface;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,33 +99,33 @@ public class AddressController {
     //UC3 (Handling REST API using service layer with database)
 
     @GetMapping("/get/{id}")
-    public ContactDTO get3(@Valid @PathVariable Long id) {
+    public ContactDTO get3(@Valid @PathVariable Long id, HttpServletRequest request) {
         log.info("Get id: {}", id);
-        return contactInterface.get(id);
+        return contactInterface.get(id, request);
     }
 
     @PostMapping("/create")
-    public ContactDTO create3(@Valid @RequestBody ContactDTO user){
+    public ContactDTO create3(@Valid @RequestBody ContactDTO user, HttpServletRequest request){
         log.info("Create employee: {}", getJSON(user));
-        return contactInterface.create(user);
+        return contactInterface.create(user, request);
     }
 
     @GetMapping("/getAll")
-    public List<ContactDTO> getAll3(){
+    public List<ContactDTO> getAll3(HttpServletRequest request){
         log.info("Get all employees");
-        return contactInterface.getAll();
+        return contactInterface.getAll(request);
     }
 
     @PutMapping("/edit/{id}")
-    public ContactDTO edit3(@Valid @RequestBody ContactDTO user, @Valid @PathVariable Long id){
+    public ContactDTO edit3(@Valid @RequestBody ContactDTO user, @Valid @PathVariable Long id, HttpServletRequest request){
         log.info("Edit id: {} and body: {}", id, getJSON(user));
-        return contactInterface.edit(user, id);
+        return contactInterface.edit(user, id, request);
     }
 
     @DeleteMapping("/delete/{id}")
-    public String delete3(@Valid @PathVariable Long id){
+    public String delete3(@Valid @PathVariable Long id, HttpServletRequest request){
         log.info("Delete id: {}", id);
-        return contactInterface.delete(id);
+        return contactInterface.delete(id, request);
     }
 
     @GetMapping("/clear")
