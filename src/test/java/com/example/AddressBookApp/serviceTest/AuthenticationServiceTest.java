@@ -26,60 +26,77 @@ public class AuthenticationServiceTest {
 
     @BeforeEach //setup
     public void registerDummyUser(){
-        //clear the test db for fresh start
+        // Clear the test database for a fresh start
         authInterface.clear();
 
-        //creating a dummy user
+        // Creating a dummy user
         AuthUserDTO dummyUser = new AuthUserDTO("DummyFirstName", "DummyLastName", "DummyEmail@gmail.com", "DummyPass12#");
 
-        //registering a dummy user, so we can implement other test cases
+        // Registering a dummy user, so we can implement other test cases
         authInterface.register(dummyUser);
-
     }
 
-    @AfterEach //clear test db
+    @AfterEach // Clear test database
     public void clearDb(){
         authInterface.clear();
     }
 
     @Test
     public void registerTest(){
-        // arrange --> action --> assert
+        // Arrange --> Action --> Assert
 
-        //arrange
+        // Arrange
         AuthUserDTO tempUser = new AuthUserDTO("FirstName", "LastName", "TempEmail@gmail.com", "Temppass12#");
 
-        //action
+        // Action
         String res = authInterface.register(tempUser);
 
-        //assert
+        // Assert
         assertEquals("User registered", res, "User registration test failed");
+    }
 
+    @Test
+    public void registerDuplicateUserTest() {
+        // Trying to register the same user again should throw an exception
+        AuthUserDTO duplicateUser = new AuthUserDTO("DummyFirstName", "DummyLastName", "DummyEmail@gmail.com", "DummyPass12#");
+
+        assertThrows(RuntimeException.class, () -> authInterface.register(duplicateUser),
+                "Duplicate registration should throw an exception");
     }
 
     @Test
     public void loginTest(){
-        //arrange
+        // Arrange
         LoginDTO userLogin = new LoginDTO("DummyEmail@gmail.com", "DummyPass12#");
 
         MockHttpServletResponse response = new MockHttpServletResponse();
 
-        //act
+        // Act
         String res = authInterface.login(userLogin, response);
 
-        //res should not be null
+        // Assert
         assertNotNull(res);
 
-        //user should be logged in
+        // User should be logged in
         assertTrue(res.contains("User logged in"), "Log in test failure");
 
-        //checking the creation of token in cookies of response
+        // Checking the creation of token in cookies of response
         String jwtToken = response.getHeader("Authorization");
 
         System.out.println(jwtToken);
 
         assertNotNull(jwtToken, "JWT Token should be set in response");
+    }
 
+    @Test
+    public void loginWithInvalidCredentialsTest() {
+        // Trying to login with incorrect credentials should throw an exception
+        LoginDTO invalidUser = new LoginDTO("DummyEmail@gmail.com", "WrongPass123");
+
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        assertThrows(RuntimeException.class, () -> authInterface.login(invalidUser, response),
+                "Invalid login should throw an exception");
     }
 
     @Test
@@ -91,6 +108,15 @@ public class AuthenticationServiceTest {
     }
 
     @Test
+    public void forgotPasswordForNonExistentUserTest() {
+        // Trying to reset password for a non-existent user should throw an exception
+        PassDTO newPass = new PassDTO("Hello1@$");
+
+        assertThrows(RuntimeException.class, () -> authInterface.forgotPassword(newPass, "nonexistent@gmail.com"),
+                "Forgot password for non-existent user should throw an exception");
+    }
+
+    @Test
     public void resetPasswordTest(){
         String email = "DummyEmail@gmail.com";
         String currentPass = "DummyPass12#";
@@ -98,13 +124,19 @@ public class AuthenticationServiceTest {
 
         String res = authInterface.resetPassword(email, currentPass, newPass);
 
-        //checking response
+        // Checking response
         assertEquals("Password reset successful!", res);
 
         AuthUser foundUser = userRepository.findByEmail("DummyEmail@gmail.com");
 
-        //checking the password updation
+        // Checking the password update
         assertEquals("NewPass12#", foundUser.getPassword());
+    }
 
+    @Test
+    public void resetPasswordWithWrongCurrentPasswordTest() {
+        // Trying to reset password with the wrong current password should throw an exception
+        assertThrows(RuntimeException.class, () -> authInterface.resetPassword("DummyEmail@gmail.com", "WrongPass123", "NewPass12#"),
+                "Reset password with wrong current password should throw an exception");
     }
 }
