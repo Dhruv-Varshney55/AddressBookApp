@@ -105,7 +105,7 @@ public class ContactService implements ContactInterface {
         //fetching userId from token in cookies of user
         Long userId = getUserId(request);
 
-        if(cacheContactList.opsForValue().get("Contact"+userId) != null) {
+        if(cacheContactList.opsForValue().get("Contact" + userId) != null) {
             System.out.println("Done through caching");
             return cacheContactList.opsForValue().get("Contact" + userId);
         }

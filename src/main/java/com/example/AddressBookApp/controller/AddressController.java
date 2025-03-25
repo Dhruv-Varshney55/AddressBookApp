@@ -6,12 +6,14 @@ import com.example.AddressBookApp.interfaces.ContactInterface;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
+@CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/address")
 @Slf4j
@@ -38,7 +40,7 @@ public class AddressController {
 
     @GetMapping("/res/getAll")
     public ResponseDTO getAll1(){
-        log.info("Get all employees");
+        log.info("Get all employee");
         return new ResponseDTO("API triggered", "Success");
     }
 
